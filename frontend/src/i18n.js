@@ -70,6 +70,14 @@ export const translations = {
       scanAnother: "Scan Another Leaf",
       printAdvisory: "Print / Save Advisory",
       viewDashboard: "View in Dashboard",
+      audioReaderTitle: "Audio Solution for Farmers (Unable to Read)",
+      audioReaderSub: "Tap below to hear the entire diagnosis, symptoms, and exact chemical dosages read aloud:",
+      listenFullSolution: "Listen to Complete Solution (Audio)",
+      stopAudio: "Stop Audio",
+      speakingNow: "Reading solution aloud...",
+      speedSlow: "Slow Voice",
+      speedNormal: "Normal Voice",
+      listenSection: "Listen",
       errorPrefix: "Error: "
     },
     dashboard: {
@@ -187,6 +195,14 @@ export const translations = {
       scanAnother: "మరొక ఆకును పరీక్షించండి",
       printAdvisory: "సూచనలను ప్రింట్ / సేవ్ చేయండి",
       viewDashboard: "డ్యాష్‌బోర్డ్‌లో చూడండి",
+      audioReaderTitle: "చదవలేని రైతు సోదరుల కోసం ఆడియో పరిష్కారం",
+      audioReaderSub: "కింది బటన్ నొక్కితే మీ పంట తెగులు, సేంద్రీయ చర్యలు మరియు రసాయన మందుల మోతాదుల వివరాలు స్పష్టంగా వినిపించబడతాయి:",
+      listenFullSolution: "పూర్తి పరిష్కారాన్ని వినండి (వాయిస్)",
+      stopAudio: "ఆడియో ఆపండి",
+      speakingNow: "పరిష్కారం చదువుతోంది...",
+      speedSlow: "నెమ్మదిగా",
+      speedNormal: "సాధారణం",
+      listenSection: "వినండి",
       errorPrefix: "లోపం: "
     },
     dashboard: {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Search, Leaf, ShieldAlert, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { BookOpen, Search, Leaf, ShieldAlert, CheckCircle2, AlertTriangle, Volume2 } from 'lucide-react';
 import { translations } from '../i18n';
+import { speakText } from '../components/VoiceAssistant';
 
 export default function DiseasesCatalog({ lang }) {
   const t = translations[lang].diseases;
@@ -178,7 +179,22 @@ export default function DiseasesCatalog({ lang }) {
 
             <div className="pt-3 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between">
               <span>{lang === 'te' ? 'తీవ్రత:' : 'Severity:'} <strong className="text-slate-700">{item.severity}</strong></span>
-              <span className="text-emerald-700 font-bold">{lang === 'te' ? 'వివరాలు అందుబాటులో ఉన్నాయి' : 'Verified Advice'}</span>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  const isTe = lang === 'te';
+                  const text = isTe
+                    ? `పంట: ${item.crop_te || item.crop}. తెగులు: ${item.disease_name_te || item.disease_name}. సేంద్రీయ నివారణ: ${(item.treatment_organic_te || item.treatment_organic || []).slice(0, 2).join('. ')}. రసాయన నివారణ: ${(item.treatment_chemical_te || item.treatment_chemical || []).slice(0, 2).join('. ')}.`
+                    : `Crop: ${item.crop}. Condition: ${item.disease_name}. Organic remedy: ${(item.treatment_organic || []).slice(0, 2).join('. ')}. Chemical dosage: ${(item.treatment_chemical || []).slice(0, 2).join('. ')}.`;
+                  speakText(text, isTe ? 'te' : 'en');
+                }}
+                title={lang === 'te' ? 'వాయిస్ ద్వారా వినండి (చదవలేని వారి కోసం)' : 'Listen to Advice (For farmers unable to read)'}
+                className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200 transition-all shadow-sm active:scale-95"
+              >
+                <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>{lang === 'te' ? 'వినండి' : 'Listen'}</span>
+              </button>
             </div>
           </div>
         ))}

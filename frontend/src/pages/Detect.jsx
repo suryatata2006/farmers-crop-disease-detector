@@ -14,11 +14,14 @@ import {
   ArrowLeft,
   ChevronRight,
   ShieldCheck,
-  Phone
+  Phone,
+  Volume2
 } from 'lucide-react';
 import { translations } from '../i18n';
 import CameraCapture from '../components/CameraCapture';
 import SamplePicker from '../components/SamplePicker';
+import AudioSolutionPlayer from '../components/AudioSolutionPlayer';
+import { speakText } from '../components/VoiceAssistant';
 
 export default function Detect({ setCurrentTab, lang }) {
   const t = translations[lang].detect;
@@ -377,6 +380,13 @@ export default function Detect({ setCurrentTab, lang }) {
               </div>
             </div>
 
+            {/* Audio Solution Player for Non-Reading Farmers */}
+            <AudioSolutionPlayer 
+              result={result} 
+              lang={lang} 
+              solutionLang={solutionLang} 
+            />
+
             {/* Middle Section: Image and Summary */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
               <div className="md:col-span-4">
@@ -534,11 +544,22 @@ export default function Detect({ setCurrentTab, lang }) {
                   <div className="bg-slate-50/70 rounded-2xl p-5 border border-slate-200/80 space-y-4">
                     {activeResultTab === 'organic' && (
                       <div className="space-y-3">
-                        <div className="bg-emerald-100/70 text-emerald-950 text-xs sm:text-sm p-3.5 rounded-xl font-bold flex items-center justify-between border border-emerald-200">
+                        <div className="bg-emerald-100/70 text-emerald-950 text-xs sm:text-sm p-3.5 rounded-xl font-bold flex items-center justify-between border border-emerald-200 flex-wrap gap-2">
                           <span>🌿 {isTe ? 'సేంద్రీయ & సహజ జీవ నివారణలు (రైతులకు తక్కువ ఖర్చు - నేల సంరక్షణ):' : 'Eco-friendly and low-cost bio-remedies suitable for sustainable farming:'}</span>
-                          <span className="bg-emerald-700 text-white text-[10px] sm:text-xs px-2.5 py-1 rounded-lg font-black shrink-0">
-                            {isTe ? 'సేంద్రీయ పరిష్కారం' : 'Organic'}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => speakText(displayOrganic.join('. '), isTe ? 'te' : 'en')}
+                              title={isTe ? 'సేంద్రీయ పరిష్కారాన్ని వినండి' : 'Listen to Organic Remedies'}
+                              className="bg-white hover:bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-lg border border-emerald-200 shadow-sm flex items-center gap-1 text-xs font-bold transition-all shrink-0"
+                            >
+                              <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>{t.listenSection}</span>
+                            </button>
+                            <span className="bg-emerald-700 text-white text-[10px] sm:text-xs px-2.5 py-1 rounded-lg font-black shrink-0">
+                              {isTe ? 'సేంద్రీయ పరిష్కారం' : 'Organic'}
+                            </span>
+                          </div>
                         </div>
                         <ul className="space-y-2.5">
                           {displayOrganic.map((org, idx) => (
@@ -553,14 +574,25 @@ export default function Detect({ setCurrentTab, lang }) {
 
                     {activeResultTab === 'chemical' && (
                       <div className="space-y-3">
-                        <div className="bg-amber-100/70 text-amber-950 text-xs sm:text-sm p-3.5 rounded-xl font-bold flex items-center justify-between border border-amber-200">
+                        <div className="bg-amber-100/70 text-amber-950 text-xs sm:text-sm p-3.5 rounded-xl font-bold flex items-center justify-between border border-amber-200 flex-wrap gap-2">
                           <div className="flex items-center gap-2">
                             <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
                             <span>{isTe ? 'రసాయన మందుల మోతాదు (జాగ్రత్త: సిఫార్సు చేసిన పరిమాణంలోనే పిచికారీ చేయండి):' : 'Chemical fungicides & dosages (Strictly adhere to recommended dilution):'}</span>
                           </div>
-                          <span className="bg-amber-600 text-white text-[10px] sm:text-xs px-2.5 py-1 rounded-lg font-black shrink-0">
-                            {isTe ? 'రసాయన పరిష్కారం' : 'Chemical'}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => speakText(displayChemical.join('. '), isTe ? 'te' : 'en')}
+                              title={isTe ? 'రసాయన మందుల మోతాదును వినండి' : 'Listen to Chemical Dosages'}
+                              className="bg-white hover:bg-amber-50 text-amber-900 px-2.5 py-1 rounded-lg border border-amber-300 shadow-sm flex items-center gap-1 text-xs font-bold transition-all shrink-0"
+                            >
+                              <Volume2 className="w-3.5 h-3.5 text-amber-700" />
+                              <span>{t.listenSection}</span>
+                            </button>
+                            <span className="bg-amber-600 text-white text-[10px] sm:text-xs px-2.5 py-1 rounded-lg font-black shrink-0">
+                              {isTe ? 'రసాయన పరిష్కారం' : 'Chemical'}
+                            </span>
+                          </div>
                         </div>
                         <ul className="space-y-2.5">
                           {displayChemical.map((chem, idx) => (
@@ -575,11 +607,22 @@ export default function Detect({ setCurrentTab, lang }) {
 
                     {activeResultTab === 'symptoms' && (
                       <div className="space-y-3">
-                        <div className="bg-slate-200/70 text-slate-800 text-xs sm:text-sm p-3.5 rounded-xl font-bold flex items-center justify-between border border-slate-300/80">
+                        <div className="bg-slate-200/70 text-slate-800 text-xs sm:text-sm p-3.5 rounded-xl font-bold flex items-center justify-between border border-slate-300/80 flex-wrap gap-2">
                           <span>🔍 {isTe ? 'పంట ఆకుపై కనిపించే స్పష్టమైన తెగులు లక్షణాలు:' : 'Observable visual leaf symptoms in the field:'}</span>
-                          <span className="bg-slate-700 text-white text-[10px] sm:text-xs px-2.5 py-1 rounded-lg font-black shrink-0">
-                            {isTe ? 'లక్షణాలు' : 'Symptoms'}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => speakText(displaySymptoms.join('. '), isTe ? 'te' : 'en')}
+                              title={isTe ? 'లక్షణాలను వినండి' : 'Listen to Symptoms'}
+                              className="bg-white hover:bg-slate-100 text-slate-800 px-2.5 py-1 rounded-lg border border-slate-300 shadow-sm flex items-center gap-1 text-xs font-bold transition-all shrink-0"
+                            >
+                              <Volume2 className="w-3.5 h-3.5 text-slate-700" />
+                              <span>{t.listenSection}</span>
+                            </button>
+                            <span className="bg-slate-700 text-white text-[10px] sm:text-xs px-2.5 py-1 rounded-lg font-black shrink-0">
+                              {isTe ? 'లక్షణాలు' : 'Symptoms'}
+                            </span>
+                          </div>
                         </div>
                         <ul className="space-y-2.5">
                           {displaySymptoms.map((sym, idx) => (
@@ -594,11 +637,22 @@ export default function Detect({ setCurrentTab, lang }) {
 
                     {activeResultTab === 'prevention' && (
                       <div className="space-y-3">
-                        <div className="bg-teal-100/70 text-teal-950 text-xs sm:text-sm p-3.5 rounded-xl font-bold flex items-center justify-between border border-teal-200">
+                        <div className="bg-teal-100/70 text-teal-950 text-xs sm:text-sm p-3.5 rounded-xl font-bold flex items-center justify-between border border-teal-200 flex-wrap gap-2">
                           <span>🛡️ {isTe ? 'భవిష్యత్తులో తెగులు తిరిగి రాకుండా నిరోధించే పంట సంరక్షణ విధానాలు:' : 'Cultural practices to prevent reinfection in upcoming crop cycles:'}</span>
-                          <span className="bg-teal-700 text-white text-[10px] sm:text-xs px-2.5 py-1 rounded-lg font-black shrink-0">
-                            {isTe ? 'ముందస్తు రక్షణ' : 'Prevention'}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => speakText(displayPrevention.join('. '), isTe ? 'te' : 'en')}
+                              title={isTe ? 'ముందస్తు జాగ్రత్తలను వినండి' : 'Listen to Prevention'}
+                              className="bg-white hover:bg-teal-50 text-teal-800 px-2.5 py-1 rounded-lg border border-teal-200 shadow-sm flex items-center gap-1 text-xs font-bold transition-all shrink-0"
+                            >
+                              <Volume2 className="w-3.5 h-3.5 text-teal-700" />
+                              <span>{t.listenSection}</span>
+                            </button>
+                            <span className="bg-teal-700 text-white text-[10px] sm:text-xs px-2.5 py-1 rounded-lg font-black shrink-0">
+                              {isTe ? 'ముందస్తు రక్షణ' : 'Prevention'}
+                            </span>
+                          </div>
                         </div>
                         <ul className="space-y-2.5">
                           {displayPrevention.map((prev, idx) => (
