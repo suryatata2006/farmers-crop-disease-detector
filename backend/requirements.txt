@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pillow
+numpy
+onnxruntime
+safetensors
+torch
+transformers
+sqlalchemy
+aiofiles
+requests
