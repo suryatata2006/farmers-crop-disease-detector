@@ -88,6 +88,11 @@ async def detect_crop_disease(
         pil_img = Image.open(BytesIO(contents))
         pil_img.verify()
         pil_img = Image.open(BytesIO(contents))
+        if pil_img.mode != "RGB":
+            pil_img = pil_img.convert("RGB")
+        # Downsample large phone camera photos (max 1200x1200) to keep memory <15MB
+        if max(pil_img.size) > 1200:
+            pil_img.thumbnail((1200, 1200), Image.Resampling.BILINEAR)
     except Exception as e:
         raise HTTPException(status_code=400, detail="Invalid or corrupted image file.")
 

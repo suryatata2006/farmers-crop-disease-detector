@@ -41,6 +41,63 @@ export default function Detect({ setCurrentTab, lang }) {
   const [activeResultTab, setActiveResultTab] = useState('organic'); // default to 'organic' treatment tab!
   const [solutionLang, setSolutionLang] = useState('te'); // default to 'te' (Telugu solutions)
 
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const MAX_DIM = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width <= MAX_DIM && height <= MAX_DIM && file.size < 500 * 1024) {
+          resolve({ file, previewUrl: URL.createObjectURL(file) });
+          return;
+        }
+
+        if (width > height) {
+          if (width > MAX_DIM) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          }
+        } else {
+          if (height > MAX_DIM) {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const safeName = file.name.replace(/\.[^/.]+$/, "") + ".jpg";
+              const optimizedFile = new File([blob], safeName, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              });
+              resolve({ file: optimizedFile, previewUrl: URL.createObjectURL(optimizedFile) });
+            } else {
+              resolve({ file, previewUrl: URL.createObjectURL(file) });
+            }
+          },
+          'image/jpeg',
+          0.88
+        );
+      };
+      img.onerror = () => {
+        resolve({ file, previewUrl: URL.createObjectURL(file) });
+      };
+      img.src = objectUrl;
+    });
+  };
+
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -48,13 +105,13 @@ export default function Detect({ setCurrentTab, lang }) {
     }
   };
 
-  const processFile = (file) => {
+  const processFile = async (file) => {
     setError(null);
     setResult(null);
 
-    // Validate size (10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setError(lang === 'te' ? 'చిత్రం పరిమాణం 10MB కంటే తక్కువగా ఉండాలి.' : 'Image size must be less than 10MB.');
+    // Validate size (15MB)
+    if (file.size > 15 * 1024 * 1024) {
+      setError(lang === 'te' ? 'చిత్రం పరిమాణం 15MB కంటే తక్కువగా ఉండాలి.' : 'Image size must be less than 15MB.');
       return;
     }
 
@@ -65,8 +122,14 @@ export default function Detect({ setCurrentTab, lang }) {
       return;
     }
 
-    setSelectedFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    try {
+      const { file: optimizedFile, previewUrl: optUrl } = await compressImage(file);
+      setSelectedFile(optimizedFile);
+      setPreviewUrl(optUrl);
+    } catch {
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
   };
 
   const handleDrop = (e) => {

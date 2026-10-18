@@ -94,8 +94,11 @@ class PlantDiseasePredictor:
         """
         Botanical verification: ensure image contains plant foliage/leaf tissue
         and is not a solid screen, blurry void, face, vehicle, animal, or random object.
+        Memory-safe: operates on 256x256 thumbnail to guarantee < 1MB RAM on any device.
         """
         img = pil_image.convert("RGB")
+        if img.size[0] > 256 or img.size[1] > 256:
+            img = img.resize((256, 256), Image.Resampling.BILINEAR)
         arr = np.array(img, dtype=np.float32)
         h, w, _ = arr.shape
 
@@ -138,6 +141,12 @@ class PlantDiseasePredictor:
     def predict(self, pil_image: Image.Image, filename: str = "") -> dict:
         if not self.is_ready:
             raise RuntimeError("Model is not initialized or labels missing.")
+
+        # Ensure image is RGB and capped at max 1024x1024 to prevent memory exhaustion
+        if pil_image.mode != "RGB":
+            pil_image = pil_image.convert("RGB")
+        if max(pil_image.size) > 1024:
+            pil_image.thumbnail((1024, 1024), Image.Resampling.BILINEAR)
 
         # Step 1: Validate image content is a botanical plant leaf
         is_leaf, leaf_msg, foliage_ratio = self.validate_leaf_image(pil_image)
