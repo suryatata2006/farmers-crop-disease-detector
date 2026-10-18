@@ -195,6 +195,10 @@ def get_sample_images():
                 })
     return {"samples": samples}
 
+from fastapi.responses import FileResponse, JSONResponse
+
+FRONTEND_DIST = os.path.join(PROJECT_ROOT, "frontend", "dist")
+
 @app.post("/api/chat", response_model=ChatResponse)
 def chat_with_agribot(req: ChatRequest):
     result = farmer_bot.process_message(
@@ -204,3 +208,29 @@ def chat_with_agribot(req: ChatRequest):
         recent_scan_id=req.recent_scan_id
     )
     return ChatResponse(**result)
+
+# Serve production frontend if built
+if os.path.exists(FRONTEND_DIST):
+    assets_dir = os.path.join(FRONTEND_DIST, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_spa(full_path: str):
+        # Allow API, docs, uploads, and samples to pass through
+        if (full_path.startswith("api/") or 
+            full_path.startswith("uploads/") or 
+            full_path.startswith("samples/") or 
+            full_path.startswith("docs") or 
+            full_path.startswith("openapi.json")):
+            raise HTTPException(status_code=404, detail="Endpoint not found")
+        
+        target = os.path.join(FRONTEND_DIST, full_path)
+        if os.path.exists(target) and os.path.isfile(target):
+            return FileResponse(target)
+        
+        index_file = os.path.join(FRONTEND_DIST, "index.html")
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+        raise HTTPException(status_code=404, detail="Frontend index.html not found")
+
