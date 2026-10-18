@@ -843,3 +843,62 @@ def get_disease_details(class_name: str) -> dict:
             ],
             "helpline": "Kisan Call Center: 1800-180-1551 (Toll-Free)"
         }
+
+    # Add Brinjal (Eggplant) specialized knowledge
+    DISEASE_KNOWLEDGE_BASE["Brinjal with Phomopsis Blight"] = {
+        "crop": "Brinjal (Eggplant)",
+        "crop_te": "వంకాయ (వంగ)",
+        "disease_name": "Brinjal Phomopsis Blight & Fruit Rot (Phomopsis vexans)",
+        "disease_name_te": "వంకాయ ఫోమోప్సిస్ ఎండు తెగులు మరియు కాయ కుళ్లు",
+        "is_healthy": False,
+        "severity": "Moderate to Severe",
+        "description": "Phomopsis vexans causes circular brown spots on brinjal leaves and fruit rot, leading to wilting of shoots and poor yields.",
+        "description_te": "ఫోమోప్సిస్ శిలీంద్రం వల్ల వంకాయ ఆకులపై గుండ్రటి గోధుమ రంగు మచ్చలు ఏర్పడి, కొమ్మలు ఎండిపోవడం మరియు కాయలు కుళ్ళిపోవడం జరుగుతుంది.",
+        "symptoms": [
+            "Circular to irregular brown foliar spots with distinct dark borders",
+            "Lesions develop tiny black pycnidia specks in concentric arrangement",
+            "Pale yellowing and dropping of severely infected lower leaves",
+            "Sunken water-soaked lesions turning soft rot on brinjal fruits"
+        ],
+        "symptoms_te": [
+            "వంకాయ ఆకులపై స్పష్టమైన ముదురు అంచులతో కూడిన గుండ్రటి గోధుమ రంగు మచ్చలు",
+            "మచ్చల మధ్యలో చిన్న నల్లటి చుక్కల వంటి శిలీంధ్ర బీజాలు కనిపించడం",
+            "తీవ్రంగా సోకిన దిగువ ఆకులు పసుపు రంగులోకి మారి రాలిపోవడం",
+            "కాయలపై నల్లటి గుంటలు పడి మెత్తగా కుళ్ళిపోవడం"
+        ],
+        "treatment_organic": [
+            "Spray 5% Neem seed kernel extract (NSKE) or Neem oil @ 5ml/L every 10 days",
+            "Foliar spray and root drench with Trichoderma harzianum @ 5g/L",
+            "Collect and deeply bury or burn all infected leaves, twigs, and fallen fruits"
+        ],
+        "treatment_organic_te": [
+            "5% వేప గింజల కషాయం (NSKE) లేదా లీటరు నీటికి 5 మి.లీ వేప నూనెను ప్రతి 10 రోజులకు ఒకసారి పిచికారీ చేయండి.",
+            "ట్రైకోడెర్మా హర్జియానం @ లీటరుకు 5 గ్రాములు కలిపి ఆకులపై పిచికారీ మరియు వేరు మొదళ్ల వద్ద తడపండి.",
+            "తెగులు సోకిన ఆకులు, ఎండిన కొమ్మలు, రాలిన కాయలను ఏరి పొలానికి దూరంగా గుంత తీసి పూడ్చివేయండి."
+        ],
+        "treatment_chemical": [
+            "Mancozeb 75% WP @ 2.5 grams per 1 Liter of water (40-50g per 16L tank)",
+            "Copper Oxychloride (Blitox 50% WP) @ 3.0 grams per Liter of water",
+            "Carbendazim 50% WP @ 1.0 gram per Liter of water at 10-14 day intervals",
+            "Thiophanate-methyl 70% WP @ 1.0 gram per Liter of water for severe blight"
+        ],
+        "treatment_chemical_te": [
+            "మాంకోజెబ్ 75% WP @ లీటరు నీటికి 2.5 గ్రాములు (16 లీటర్ల ట్యాంకుకు 40-50 గ్రాములు) కలిపి పిచికారీ చేయండి.",
+            "కాపర్ ఆక్సీక్లోరైడ్ (బ్లైటాక్స్ 50% WP) @ లీటరు నీటికి 3.0 గ్రాములు కలిపి పిచికారీ చేయండి.",
+            "కార్బెండజిమ్ 50% WP @ లీటరు నీటికి 1.0 గ్రాము కలిపి 10-14 రోజుల వ్యవధిలో పిచికారీ చేయండి.",
+            "తీవ్రత ఎక్కువగా ఉన్నప్పుడు: థయోఫనేట్-మిథైల్ 70% WP @ లీటరుకు 1.0 గ్రాము పిచికారీ చేయండి."
+        ],
+        "prevention": [
+            "Soak seeds in Thiram or Captan @ 3g/kg seed before nursery sowing",
+            "Practice 2-3 years crop rotation with non-solanaceous crops like maize, legumes, or paddy",
+            "Avoid excessive overhead sprinkling; prefer drip irrigation around root zones",
+            "Use certified Phomopsis-tolerant hybrid brinjal varieties"
+        ],
+        "prevention_te": [
+            "విత్తేముందు విత్తనశుద్ధి: కిలో విత్తనానికి 3 గ్రాముల థైరమ్ లేదా కాప్టాన్ మందుతో విత్తనశుద్ధి చేయండి.",
+            "మొక్కజొన్న, పప్పుదినుసులు లేదా వరి వంటి పంటలతో 2-3 సంవత్సరాలు పంట మార్పిడి చేయండి.",
+            "మొక్కల మొదళ్ల వద్ద మాత్రమే నీరందేలా బిందు సేద్యం (డ్రిప్) ఉపయోగించండి.",
+            "ఫోమోప్సిస్ తెగులును తట్టుకునే ధ్రువీకరించిన వంగ వంగడాలను ఎంచుకోండి."
+        ],
+        "helpline": "Kisan Call Center: 1800-180-1551 (Toll-Free)"
+    }

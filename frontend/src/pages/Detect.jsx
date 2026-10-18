@@ -15,7 +15,10 @@ import {
   ChevronRight,
   ShieldCheck,
   Phone,
-  Volume2
+  Volume2,
+  Bot,
+  XCircle,
+  HelpCircle
 } from 'lucide-react';
 import { translations } from '../i18n';
 import CameraCapture from '../components/CameraCapture';
@@ -330,17 +333,38 @@ export default function Detect({ setCurrentTab, lang }) {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full">
+                  <span className={`text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full ${
+                    result.status === 'non_plant'
+                      ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                      : result.status === 'unsupported_or_uncertain'
+                        ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                        : 'bg-emerald-100 text-emerald-800'
+                  }`}>
                     {lang === 'te' ? result.crop_te : result.crop}
                   </span>
+                  
                   <span
                     className={`text-xs font-extrabold px-3 py-1 rounded-full flex items-center gap-1.5 ${
-                      result.is_healthy
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-rose-600 text-white'
+                      result.status === 'non_plant'
+                        ? 'bg-rose-600 text-white'
+                        : result.status === 'unsupported_or_uncertain'
+                          ? 'bg-amber-600 text-white'
+                          : result.is_healthy
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-rose-600 text-white'
                     }`}
                   >
-                    {result.is_healthy ? (
+                    {result.status === 'non_plant' ? (
+                      <>
+                        <XCircle className="w-3.5 h-3.5" />
+                        {lang === 'te' ? 'పంట ఆకు కాదు' : 'Not a Plant Leaf'}
+                      </>
+                    ) : result.status === 'unsupported_or_uncertain' ? (
+                      <>
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        {lang === 'te' ? 'అనిశ్చిత ఫలితం (<65%)' : 'Uncertain (<65% Conf)'}
+                      </>
+                    ) : result.is_healthy ? (
                       <>
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         {t.healthyBadge}
@@ -366,19 +390,88 @@ export default function Detect({ setCurrentTab, lang }) {
 
               {/* Confidence Meter Box */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 sm:text-right min-w-[200px]">
-                <p className="text-xs font-semibold text-slate-500">{t.confidenceLabel}</p>
-                <p className="text-3xl font-black text-emerald-600">
-                  {result.confidence}%
+                <p className="text-xs font-semibold text-slate-500">
+                  {result.status === 'non_plant'
+                    ? (lang === 'te' ? 'పరిశీలన ఫలితం' : 'Validation Status')
+                    : t.confidenceLabel}
+                </p>
+                <p className={`text-3xl font-black ${
+                  result.status === 'non_plant'
+                    ? 'text-rose-600'
+                    : result.status === 'unsupported_or_uncertain'
+                      ? 'text-amber-600'
+                      : 'text-emerald-600'
+                }`}>
+                  {result.status === 'non_plant' ? '0%' : `${result.confidence}%`}
+                </p>
+                <p className="text-[10px] font-bold text-slate-500 mt-0.5">
+                  {result.status === 'non_plant'
+                    ? (lang === 'te' ? 'వృక్ష సంబంధం లేదు (తిరస్కరణ)' : 'Rejected (Non-Botanical)')
+                    : result.status === 'unsupported_or_uncertain'
+                      ? (lang === 'te' ? '65% కంటే తక్కువ (అనిశ్చితం)' : 'Below 65% Verification Gate')
+                      : (lang === 'te' ? 'నమ్మదగిన ఫలితం (ధృవీకరించబడింది)' : 'High Confidence Diagnosis')}
                 </p>
                 {/* Confidence Bar */}
                 <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mt-1.5">
                   <div 
-                    className="bg-emerald-600 h-full rounded-full transition-all duration-1000"
-                    style={{ width: `${result.confidence}%` }}
+                    className={`h-full rounded-full transition-all duration-1000 ${
+                      result.status === 'non_plant'
+                        ? 'bg-rose-500'
+                        : result.status === 'unsupported_or_uncertain'
+                          ? 'bg-amber-500'
+                          : 'bg-emerald-600'
+                    }`}
+                    style={{ width: result.status === 'non_plant' ? '0%' : `${result.confidence}%` }}
                   ></div>
                 </div>
               </div>
             </div>
+
+            {/* Specialized Alert Banners for Non-Plant or Uncertain Scans */}
+            {result.status === 'non_plant' && (
+              <div className="p-4 rounded-2xl bg-rose-50 border-2 border-rose-300 text-rose-900 space-y-2.5">
+                <div className="flex items-center gap-2 font-black text-sm sm:text-base text-rose-950">
+                  <XCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                  <span>{lang === 'te' ? 'జాగ్రత్త: మీరు అప్‌లోడ్ చేసిన చిత్రం పంట ఆకు కాదు!' : 'Attention: Uploaded photo is not a plant leaf!'}</span>
+                </div>
+                <p className="text-xs sm:text-sm text-rose-800 leading-relaxed">
+                  {lang === 'te'
+                    ? 'తప్పుడు తెగులు నిర్ధారణలను నివారించడానికి మా AI వ్యవస్థ ఆకు లక్షణాలను తనిఖీ చేసింది. ఈ చిత్రంలో ఎటువంటి పంట ఆకు లేదా ఆకుపచ్చ/తెగులు కణజాలం కనిపించలేదు. దయచేసి మనుషులు, జంతువులు, వాహనాలు, వస్తువులు లేదా ఖాళీ స్క్రీన్ ఫోటోలను అప్‌లోడ్ చేయవద్దు.'
+                    : 'To protect farmers from false disease alerts, KrishiSeva verifies botanical foliage structure. This image was flagged as non-botanical (no plant leaf foliage detected). Please upload or photograph a real crop leaf.'}
+                </p>
+                <div className="flex flex-wrap gap-2 text-xs font-semibold text-rose-900 pt-1">
+                  <span className="bg-white/90 px-3 py-1 rounded-lg border border-rose-200">📸 {lang === 'te' ? 'ఆకు కెమెరా ఫ్రేమ్‌లో 70% నిండాలి' : 'Leaf should fill 70% of frame'}</span>
+                  <span className="bg-white/90 px-3 py-1 rounded-lg border border-rose-200">☀️ {lang === 'te' ? 'సహజ పగటి వెలుతురులో తీయండి' : 'Shoot in natural daylight'}</span>
+                  <span className="bg-white/90 px-3 py-1 rounded-lg border border-rose-200">🚫 {lang === 'te' ? 'చేతులు లేదా ఇతర వస్తువులు అడ్డురాకుండా చూడండి' : 'Avoid hands or background clutter'}</span>
+                </div>
+              </div>
+            )}
+
+            {result.status === 'unsupported_or_uncertain' && (
+              <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border-2 border-amber-300 text-amber-950 space-y-3">
+                <div className="flex items-center gap-2 font-black text-sm sm:text-base text-amber-950">
+                  <AlertTriangle className="w-5 h-5 text-amber-700 shrink-0" />
+                  <span>{lang === 'te' ? 'అనిశ్చిత ఫలితం (విశ్వసనీయత 65% కంటే తక్కువ - రసాయనాలు వాడవద్దు)' : 'Uncertain Diagnosis (Below 65% Verification Gate - Do Not Spray)'}</span>
+                </div>
+                <p className="text-xs sm:text-sm text-amber-900 leading-relaxed">
+                  {lang === 'te'
+                    ? 'ఈ ఆకుపై AI విశ్వసనీయత 65% కంటే తక్కువగా ఉంది. ఇది మద్దతు లేని పంట (వంకాయ, వరి, పత్తి, కర్రపెండలం, మామిడి మొదలైనవి) కావచ్చు లేదా ఆకుపై లక్షణాలు అస్పష్టంగా ఉన్నాయి. పంటకు నష్టం కలగకుండా ఉండేందుకు రసాయనాలను గుడ్డిగా పిచికారీ చేయవద్దు!'
+                    : 'Because AI confidence is below our 65% threshold, KrishiSeva has gated this diagnosis to prevent crop toxicity from incorrect chemical application. Supported crops include Tomato, Potato, Corn, Bell Pepper, Apple, Grape, Strawberry, and Brinjal.'}
+                </p>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
+                  <div className="text-xs text-amber-900">
+                    <strong>{lang === 'te' ? 'రైతులకు సలహా:' : 'Agronomic Advice:'}</strong> {lang === 'te' ? 'సేంద్రీయ పద్ధతులు పాటించండి లేదా రైతు మిత్ర AI ని అడగండి.' : 'Follow organic practices or consult Krishi Mitra AI.'}
+                  </div>
+                  <button
+                    onClick={() => setCurrentTab('chat')}
+                    className="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-sm transition-all shrink-0"
+                  >
+                    <Bot className="w-4 h-4 text-emerald-200" />
+                    <span>{lang === 'te' ? 'రైతు మిత్ర AI ని అడగండి' : 'Ask Krishi Mitra AI'}</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Audio Solution Player for Non-Reading Farmers */}
             <AudioSolutionPlayer 
@@ -440,7 +533,33 @@ export default function Detect({ setCurrentTab, lang }) {
               </div>
             </div>
 
-            {/* Interactive Advisory Tabs */}
+            {/* Interactive Advisory Tabs or Non-Plant Guidance */}
+            {result.status === 'non_plant' ? (
+              <div className="bg-slate-50/90 rounded-2xl p-6 sm:p-8 border border-slate-200 text-center space-y-4">
+                <div className="w-14 h-14 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
+                  <XCircle className="w-8 h-8" />
+                </div>
+                <div className="space-y-1.5 max-w-lg mx-auto">
+                  <h3 className="text-lg font-black text-slate-900">
+                    {lang === 'te' ? 'మందుల సూచనలు నిలిపివేయబడ్డాయి' : 'Treatment Protocols Withheld'}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    {lang === 'te'
+                      ? 'ఈ చిత్రం పంట ఆకు కాదని గుర్తించబడింది కాబట్టి రసాయన లేదా సేంద్రీయ మందుల వివరాలు చూపబడవు. తప్పుడు మందుల వల్ల పంటలకు ఎలాంటి నష్టం జరగకుండా ఈ భద్రతా నియమం ఏర్పాటు చేయబడింది. దయచేసి నిజమైన పంట ఆకు ఫోటోతో మళ్లీ పరీక్షించండి.'
+                      : 'Treatment protocols are withheld because the uploaded image does not contain recognizable plant foliage. This safety gate prevents false chemical recommendations. Please scan a genuine crop leaf in good lighting.'}
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <button
+                    onClick={resetSelection}
+                    className="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs sm:text-sm rounded-xl shadow-lg shadow-emerald-600/30 transition-all inline-flex items-center gap-2"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    <span>{lang === 'te' ? 'నిజమైన పంట ఆకును పరీక్షించండి' : 'Scan a Real Leaf Specimen'}</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
             <div className="space-y-4 pt-4 border-t border-slate-100">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
                 {/* Tab Navigation */}
@@ -574,6 +693,21 @@ export default function Detect({ setCurrentTab, lang }) {
 
                     {activeResultTab === 'chemical' && (
                       <div className="space-y-3">
+                        {result.status === 'unsupported_or_uncertain' && (
+                          <div className="p-4 bg-rose-50 border-2 border-rose-300 rounded-xl text-rose-950 text-xs sm:text-sm font-bold flex items-start gap-2.5">
+                            <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="font-black text-rose-950">
+                                {isTe ? '🛑 హెచ్చరిక: రసాయన మందులను గుడ్డిగా పిచికారీ చేయవద్దు!' : '🛑 Strict Warning: Do NOT apply chemical pesticides!'}
+                              </p>
+                              <p className="text-xs font-normal text-rose-800 mt-1">
+                                {isTe 
+                                  ? 'ఈ వ్యాధి నిర్ధారణ AI 65% ఖచ్చితత్వ పరిమితి కంటే తక్కువగా ఉంది. తప్పుడు రసాయన మందులు పిచికారీ చేస్తే పంట మాడిపోయే ప్రమాదం ఉంది. దయచేసి సేంద్రీయ పద్ధతులు పాటించండి లేదా కిసాన్ కాల్ సెంటర్‌ను (1800-180-1551) సంప్రదించండి.'
+                                  : 'Because this diagnosis is below our 65% verification gate, chemical applications could cause crop damage (phytotoxicity) or wasted money. Follow organic practices or verify with your local agricultural officer.'}
+                              </p>
+                            </div>
+                          </div>
+                        )}
                         <div className="bg-amber-100/70 text-amber-950 text-xs sm:text-sm p-3.5 rounded-xl font-bold flex items-center justify-between border border-amber-200 flex-wrap gap-2">
                           <div className="flex items-center gap-2">
                             <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0" />
@@ -668,6 +802,7 @@ export default function Detect({ setCurrentTab, lang }) {
                 );
               })()}
             </div>
+            )}
 
             {/* Kisan Hotline Help Box */}
             <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-2xl p-4 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-4">

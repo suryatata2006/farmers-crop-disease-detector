@@ -30,6 +30,11 @@ class PredictionResponse(BaseModel):
     disclaimer_te: str
     top_candidates: List[TopPrediction]
     image_url: str
+    is_valid_leaf: bool = True
+    is_supported_crop: bool = True
+    status: str = "success"
+    uncertainty_message: Optional[str] = None
+    uncertainty_message_te: Optional[str] = None
 
 class ScanHistoryItem(BaseModel):
     id: int

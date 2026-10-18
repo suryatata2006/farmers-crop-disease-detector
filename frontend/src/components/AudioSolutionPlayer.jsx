@@ -67,6 +67,20 @@ export default function AudioSolutionPlayer({ result, lang = 'en', solutionLang 
       ? result.prevention_te
       : result.prevention || []).slice(0, 2).join('. ');
 
+    if (result.status === 'non_plant' || !result.is_valid_leaf) {
+      if (isTe) {
+        return `నమస్కారం రైతు సోదరులారా. అప్‌లోడ్ చేసిన చిత్రం పంట ఆకుగా గుర్తించబడలేదు. చిత్రంలో ఎటువంటి పంట ఆకు భాగం కనిపించలేదు. దయచేసి మంచి పగటి వెలుతురులో పంట ఆకు మాత్రమే కనిపించేలా దగ్గరగా మరొక ఫోటో తీసి అప్‌లోడ్ చేయండి. ఉచిత సహాయం కోసం కిసాన్ కాల్ సెంటర్ 1800-180-1551 కి కాల్ చేయండి.`;
+      }
+      return `Hello farmer. The uploaded photo does not appear to be a crop leaf. No plant foliage was detected. Please capture a clear photo of an affected crop leaf in good daylight. For free agricultural help, call Kisan Call Center 1800-180-1551.`;
+    }
+
+    if (result.status === 'unsupported_or_uncertain' || !result.is_supported_crop) {
+      if (isTe) {
+        return `నమస్కారం రైతు సోదరులారా. ఈ ఆకును గుర్తించడంలో AI విశ్వసనీయత ${confidence} శాతం మాత్రమే ఉంది. ఇది 65 శాతం కనీస పరిమితి కంటే తక్కువగా ఉండటం వల్ల నిర్ధారణ అనిశ్చితంగా ఉంది. ఇది మద్దతు లేని ఇతర పంట కావచ్చు లేదా ఆకుపై మచ్చలు అస్పష్టంగా ఉండవచ్చు. దయచేసి అనిశ్చిత ఫలితాలపై ఎటువంటి రసాయన మందులు పిచికారీ చేయవద్దు. మీ పంట గురించి తెలుసుకోవడానికి కృషి మిత్ర వాయిస్ AI ని అడగండి.`;
+      }
+      return `Hello farmer. The AI model identified this leaf with only ${confidence} percent confidence, which is below our 65 percent threshold. This may be an unsupported crop variety or ambiguous symptoms. Chemical spraying is strictly not recommended for uncertain diagnoses. You can ask Krishi Mitra Voice AI directly about your crop.`;
+    }
+
     if (result.is_healthy) {
       if (isTe) {
         return `నమస్కారం రైతు సోదరులారా! శుభవార్త. మీ ${cropName} పంట ఆకు సంపూర్ణ ఆరోగ్యంగా ఉంది. ఎటువంటి తెగులు లేదా వ్యాధి లక్షణాలు కనిపించలేదు. మీ పంట సంరక్షణను ఇలాగే కొనసాగించండి. ఏదైనా సందేహం ఉంటే కిసాన్ కాల్ సెంటర్ 1800-180-1551 కి కాల్ చేయండి.`;

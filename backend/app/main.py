@@ -100,9 +100,9 @@ async def detect_crop_disease(
         with open(file_path, "wb") as f:
             f.write(contents)
 
-    # Run inference
+    # Run inference with validation & gating
     try:
-        prediction_result = predictor.predict(pil_img)
+        prediction_result = predictor.predict(pil_img, filename=filename)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Inference error: {str(e)}")
 
