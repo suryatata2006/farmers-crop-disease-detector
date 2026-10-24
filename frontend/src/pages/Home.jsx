@@ -11,8 +11,15 @@ export default function Home({ setCurrentTab, lang }) {
   const t = translations[lang].home;
 
   return (
-    <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 sm:py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto text-center space-y-7">
+    <div 
+      className="relative min-h-[calc(100vh-160px)] flex items-center justify-center py-12 sm:py-20 px-4 sm:px-6 lg:px-8 bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: "url('/home-bg.jpg')" }}
+    >
+      {/* Ambient gradient overlay */}
+      <div className="absolute inset-0 bg-slate-900/15 backdrop-blur-[0.5px]"></div>
+
+      {/* Hero Content Card with Frosted Glass Effect */}
+      <div className="relative z-10 max-w-3xl mx-auto text-center space-y-7 bg-white/85 sm:bg-white/90 backdrop-blur-md p-8 sm:p-12 rounded-3xl shadow-2xl border border-white/80">
         
         {/* Badge */}
         <div className="inline-flex items-center gap-2 bg-emerald-100/90 text-emerald-800 text-xs sm:text-sm font-bold px-4 py-2 rounded-full shadow-sm">
@@ -29,7 +36,7 @@ export default function Home({ setCurrentTab, lang }) {
         </h1>
 
         {/* Subtitle Description */}
-        <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal">
+        <p className="text-base sm:text-lg text-slate-700 max-w-2xl mx-auto leading-relaxed font-medium">
           {t.heroSubtitle}
         </p>
 
@@ -46,7 +53,7 @@ export default function Home({ setCurrentTab, lang }) {
 
           <button
             onClick={() => setCurrentTab('detect')}
-            className="w-full sm:w-auto px-8 py-4 bg-white hover:bg-slate-50 text-slate-700 font-bold text-base rounded-2xl border border-slate-200 shadow-sm hover:shadow transition-all flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-8 py-4 bg-white/95 hover:bg-white text-slate-700 font-bold text-base rounded-2xl border border-slate-200 shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
           >
             <Sprout className="w-5 h-5 text-emerald-600" />
             <span>{t.ctaDemo}</span>
