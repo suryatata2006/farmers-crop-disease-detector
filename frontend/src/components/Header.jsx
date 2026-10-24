@@ -47,8 +47,12 @@ export default function Header({ currentTab, setCurrentTab, lang, setLang }) {
             onClick={() => handleNavClick('home')}
             className="flex items-center gap-3 cursor-pointer group"
           >
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-300">
-              <Sprout className="w-7 h-7 text-white" />
+            <div className="w-12 h-12 rounded-2xl bg-white shadow-md shadow-emerald-600/10 border border-emerald-100 flex items-center justify-center p-1 group-hover:scale-105 group-hover:shadow-emerald-600/25 transition-all duration-300 overflow-hidden">
+              <img 
+                src="/logo-icon.png" 
+                alt="Farmers Smart Crop Disease Detector" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <div className="flex items-center gap-1.5">

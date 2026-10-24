@@ -54,8 +54,8 @@ export default function Home({ setCurrentTab, lang }) {
             
             {/* Left Column Text */}
             <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 bg-emerald-100/90 text-emerald-800 text-xs sm:text-sm font-bold px-4 py-1.5 rounded-full shadow-sm">
-                <Sparkles className="w-4 h-4 text-emerald-600 animate-spin" />
+              <div className="inline-flex items-center gap-2.5 bg-white border border-emerald-200/80 text-emerald-900 text-xs sm:text-sm font-bold px-3.5 py-1.5 rounded-full shadow-sm">
+                <img src="/logo-icon.png" alt="Logo" className="w-5 h-5 object-contain" />
                 <span>{t.badge}</span>
               </div>
 

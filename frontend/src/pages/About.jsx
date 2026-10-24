@@ -19,10 +19,19 @@ export default function About({ lang }) {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-12">
       {/* Page Title */}
-      <div className="text-center space-y-2">
-        <span className="text-xs font-black text-emerald-800 uppercase tracking-wider bg-emerald-100 px-3 py-1 rounded-full">
-          DTI Capstone Prototype
-        </span>
+      <div className="text-center space-y-3">
+        <div className="w-24 h-24 mx-auto rounded-3xl bg-white shadow-xl shadow-emerald-700/10 border border-emerald-100 p-2.5 flex items-center justify-center hover:scale-105 transition-transform duration-300">
+          <img 
+            src="/logo-icon.png" 
+            alt="Farmers Smart Crop Disease Detector Logo" 
+            className="w-full h-full object-contain"
+          />
+        </div>
+        <div>
+          <span className="text-xs font-black text-emerald-800 uppercase tracking-wider bg-emerald-100 px-3 py-1 rounded-full inline-block">
+            DTI Capstone Prototype
+          </span>
+        </div>
         <h1 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
           {t.title}
         </h1>
@@ -56,8 +65,8 @@ export default function About({ lang }) {
 
         {/* The Solution */}
         <div className="bg-white rounded-3xl p-8 border border-slate-200/90 shadow-sm space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <Sprout className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-white border border-emerald-100 shadow-sm flex items-center justify-center p-1 overflow-hidden">
+            <img src="/logo-icon.png" alt="Logo" className="w-full h-full object-contain" />
           </div>
           <h2 className="text-xl font-black text-slate-900">{t.solutionTitle}</h2>
           <p className="text-sm text-slate-600 leading-relaxed">

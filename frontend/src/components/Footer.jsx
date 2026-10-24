@@ -12,8 +12,12 @@ export default function Footer({ lang, setCurrentTab }) {
           {/* Brand & mission */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white">
-                <Sprout className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center p-1 shadow-md overflow-hidden">
+                <img 
+                  src="/logo-icon.png" 
+                  alt="Farmers Smart Crop Disease Detector" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
                 <span className="text-xl font-black text-white tracking-tight">KrishiSeva AI</span>
