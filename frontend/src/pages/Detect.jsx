@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Upload, 
   Camera, 
@@ -26,7 +26,7 @@ import SamplePicker from '../components/SamplePicker';
 import AudioSolutionPlayer from '../components/AudioSolutionPlayer';
 import { speakText } from '../components/VoiceAssistant';
 
-export default function Detect({ setCurrentTab, lang }) {
+export default function Detect({ setCurrentTab, lang, activeSample }) {
   const t = translations[lang].detect;
   const fileInputRef = useRef(null);
 
@@ -40,6 +40,18 @@ export default function Detect({ setCurrentTab, lang }) {
   const [error, setError] = useState(null);
   const [activeResultTab, setActiveResultTab] = useState('organic'); // default to 'organic' treatment tab!
   const [solutionLang, setSolutionLang] = useState('te'); // default to 'te' (Telugu solutions)
+
+  // Listen to activeSample changes from demo sample clicks
+  useEffect(() => {
+    if (activeSample && activeSample.file) {
+      setSelectedFile(activeSample.file);
+      setPreviewUrl(activeSample.previewUrl || URL.createObjectURL(activeSample.file));
+      setSelectedSampleId(activeSample.sampleId || null);
+      setActiveInputMode('upload');
+      setResult(null);
+      setError(null);
+    }
+  }, [activeSample]);
 
   const compressImage = (file) => {
     return new Promise((resolve) => {
@@ -286,7 +298,7 @@ export default function Detect({ setCurrentTab, lang }) {
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-emerald-300 hover:border-emerald-500 rounded-3xl p-10 text-center cursor-pointer bg-emerald-50/20 hover:bg-emerald-50/40 transition-all duration-200 space-y-4 group"
+              className="border-2 border-dashed border-emerald-300 hover:border-emerald-500 rounded-3xl p-8 sm:p-12 text-center cursor-pointer bg-emerald-50/20 hover:bg-emerald-50/40 transition-all duration-200 space-y-4 group"
             >
               <input
                 ref={fileInputRef}
@@ -295,18 +307,24 @@ export default function Detect({ setCurrentTab, lang }) {
                 onChange={handleFileChange}
                 className="hidden"
               />
-              <div className="w-16 h-16 rounded-2xl bg-emerald-100 group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white text-emerald-700 mx-auto flex items-center justify-center transition-all duration-300 shadow-sm">
-                <Upload className="w-8 h-8" />
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-emerald-100 group-hover:scale-110 group-hover:bg-emerald-600 group-hover:text-white text-emerald-700 mx-auto flex items-center justify-center transition-all duration-300 shadow-sm">
+                <Upload className="w-8 h-8 sm:w-10 sm:h-10" />
               </div>
-              <div className="space-y-1">
-                <p className="text-base font-bold text-slate-800">
+              <div className="space-y-2">
+                <p className="text-base sm:text-lg font-bold text-slate-800">
                   {t.dropPrompt}{' '}
                   <span className="text-emerald-700 underline font-extrabold">
                     {t.browseButton}
                   </span>
                 </p>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                  {t.fileHint}
+                <div className="pt-2">
+                  <span className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md shadow-emerald-600/20 transition-all">
+                    <Upload className="w-4 h-4" />
+                    <span>{lang === 'te' ? 'పంట ఆకు చిత్రాన్ని అప్‌లోడ్ చేయండి' : 'Upload Plant Image'}</span>
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto pt-2">
+                  {t.fileHint || 'Supports JPG, JPEG, PNG, WEBP (Max 15MB)'}
                 </p>
               </div>
             </div>
