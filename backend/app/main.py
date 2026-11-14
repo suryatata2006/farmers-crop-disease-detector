@@ -111,6 +111,13 @@ async def detect_crop_disease(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Inference error: {str(e)}")
 
+    # Strictly reject non-plant / human images with user-requested error message
+    if prediction_result.get("status") == "non_plant" or not prediction_result.get("is_valid_leaf", True):
+        raise HTTPException(
+            status_code=400,
+            detail="Upload a correct image of the leaf or upload a leaf image."
+        )
+
     # Store record in SQLite database
     image_url = f"/uploads/{unique_filename}"
     scan_record = ScanHistory(

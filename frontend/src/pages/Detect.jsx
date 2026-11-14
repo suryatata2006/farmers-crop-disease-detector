@@ -53,18 +53,80 @@ export default function Detect({ setCurrentTab, lang, activeSample }) {
     }
   }, [activeSample]);
 
+  const checkIsBotanicalLeaf = (img) => {
+    try {
+      const c = document.createElement('canvas');
+      c.width = 128;
+      c.height = 128;
+      const ctx = c.getContext('2d', { willReadFrequently: true });
+      if (!ctx) return true;
+      ctx.drawImage(img, 0, 0, 128, 128);
+      const data = ctx.getImageData(0, 0, 128, 128).data;
+      const total = 128 * 128;
+
+      let foliagePixels = 0;
+      let skinPixels = 0;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i] / 255;
+        const g = data[i + 1] / 255;
+        const b = data[i + 2] / 255;
+
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const delta = max - min + 1e-6;
+        const s = delta / (max + 1e-6);
+
+        let hue = 0;
+        if (max === r) {
+          hue = (60 * ((g - b) / delta)) % 360;
+        } else if (max === g) {
+          hue = (60 * ((b - r) / delta) + 120) % 360;
+        } else {
+          hue = (60 * ((r - g) / delta) + 240) % 360;
+        }
+        if (hue < 0) hue += 360;
+
+        const exg = 2 * g - r - b;
+
+        // Botanical green foliage or chlorotic yellow
+        const isGreen = hue >= 35 && hue <= 160 && s >= 0.16 && max >= 0.12 && max <= 0.95 && (g - b) >= 0.05 && g >= r * 0.95 && exg >= 0.05;
+        const isYellow = hue >= 30 && hue < 45 && s >= 0.28 && max >= 0.20 && (g - b) >= 0.09 && g >= r * 0.88;
+        if (isGreen || isYellow) foliagePixels++;
+
+        // Human skin tone
+        const isSkin = r > 0.36 && g > 0.16 && b > 0.10 && r > g && g > b && (r - g) > 0.05 && (r - b) > 0.10 && (hue <= 30 || hue >= 340) && s >= 0.15 && s <= 0.72;
+        if (isSkin) skinPixels++;
+      }
+
+      const foliageRatio = foliagePixels / total;
+      const skinRatio = skinPixels / total;
+
+      if ((skinRatio > 0.12 && foliageRatio < 0.22) || skinRatio > 0.28) {
+        return false;
+      }
+      if (foliageRatio < 0.15) {
+        return false;
+      }
+      return true;
+    } catch {
+      return true;
+    }
+  };
+
   const compressImage = (file) => {
     return new Promise((resolve) => {
       const img = new window.Image();
       const objectUrl = URL.createObjectURL(file);
       img.onload = () => {
         URL.revokeObjectURL(objectUrl);
+        const isLeaf = checkIsBotanicalLeaf(img);
         const MAX_DIM = 1200;
         let width = img.width;
         let height = img.height;
 
         if (width <= MAX_DIM && height <= MAX_DIM && file.size < 500 * 1024) {
-          resolve({ file, previewUrl: URL.createObjectURL(file) });
+          resolve({ file, previewUrl: URL.createObjectURL(file), isLeaf });
           return;
         }
 
@@ -94,9 +156,9 @@ export default function Detect({ setCurrentTab, lang, activeSample }) {
                 type: 'image/jpeg',
                 lastModified: Date.now(),
               });
-              resolve({ file: optimizedFile, previewUrl: URL.createObjectURL(optimizedFile) });
+              resolve({ file: optimizedFile, previewUrl: URL.createObjectURL(optimizedFile), isLeaf });
             } else {
-              resolve({ file, previewUrl: URL.createObjectURL(file) });
+              resolve({ file, previewUrl: URL.createObjectURL(file), isLeaf });
             }
           },
           'image/jpeg',
@@ -104,7 +166,7 @@ export default function Detect({ setCurrentTab, lang, activeSample }) {
         );
       };
       img.onerror = () => {
-        resolve({ file, previewUrl: URL.createObjectURL(file) });
+        resolve({ file, previewUrl: URL.createObjectURL(file), isLeaf: true });
       };
       img.src = objectUrl;
     });
@@ -135,9 +197,14 @@ export default function Detect({ setCurrentTab, lang, activeSample }) {
     }
 
     try {
-      const { file: optimizedFile, previewUrl: optUrl } = await compressImage(file);
+      const { file: optimizedFile, previewUrl: optUrl, isLeaf } = await compressImage(file);
       setSelectedFile(optimizedFile);
       setPreviewUrl(optUrl);
+      if (isLeaf === false) {
+        setError(lang === 'te' 
+          ? 'దయచేసి సరైన పంట ఆకు చిత్రాన్ని అప్‌లోడ్ చేయండి.' 
+          : 'Upload a correct image of the leaf or upload a leaf image.');
+      }
     } catch {
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
@@ -178,6 +245,29 @@ export default function Detect({ setCurrentTab, lang, activeSample }) {
     setError(null);
     setResult(null);
 
+    // Quick client-side check on the preview
+    if (previewUrl) {
+      try {
+        const testImg = new window.Image();
+        testImg.src = previewUrl;
+        await new Promise((res) => {
+          if (testImg.complete) res();
+          else testImg.onload = () => res();
+        });
+        const isBotanical = checkIsBotanicalLeaf(testImg);
+        if (!isBotanical) {
+          setIsAnalyzing(false);
+          setError(lang === 'te' 
+            ? 'దయచేసి సరైన పంట ఆకు చిత్రాన్ని అప్‌లోడ్ చేయండి.' 
+            : 'Upload a correct image of the leaf or upload a leaf image.');
+          setResult(null);
+          return;
+        }
+      } catch {
+        // Continue to server verification
+      }
+    }
+
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
@@ -189,14 +279,25 @@ export default function Detect({ setCurrentTab, lang, activeSample }) {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `Server returned error ${response.status}`);
+        throw new Error(errorData.detail || (lang === 'te' ? 'దయచేసి సరైన పంట ఆకు చిత్రాన్ని అప్‌లోడ్ చేయండి.' : 'Upload a correct image of the leaf or upload a leaf image.'));
       }
 
       const data = await response.json();
+
+      // If backend reports non-plant, strictly block any diagnosis and show error
+      if (data.status === 'non_plant' || data.is_valid_leaf === false || data.crop?.includes('Human') || data.crop?.includes('Non-Plant') || data.crop?.includes('Unrecognized')) {
+        setError(lang === 'te' 
+          ? 'దయచేసి సరైన పంట ఆకు చిత్రాన్ని అప్‌లోడ్ చేయండి.' 
+          : 'Upload a correct image of the leaf or upload a leaf image.');
+        setResult(null);
+        return;
+      }
+
       setResult(data);
     } catch (err) {
       console.error('Detection failed:', err);
-      setError(err.message || (lang === 'te' ? 'విశ్లేషణ విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.' : 'Analysis failed. Please verify that the backend is running and try again.'));
+      setError(err.message || (lang === 'te' ? 'దయచేసి సరైన పంట ఆకు చిత్రాన్ని అప్‌లోడ్ చేయండి.' : 'Upload a correct image of the leaf or upload a leaf image.'));
+      setResult(null);
     } finally {
       setIsAnalyzing(false);
     }
@@ -263,11 +364,17 @@ export default function Detect({ setCurrentTab, lang, activeSample }) {
 
           {/* Error Banner */}
           {error && (
-            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold">{t.errorPrefix}</p>
-                <p className="text-xs text-rose-700">{error}</p>
+            <div className="p-4 sm:p-5 rounded-2xl bg-rose-50 border-2 border-rose-300 text-rose-900 flex items-center gap-3.5 shadow-sm animate-in fade-in duration-200">
+              <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center shrink-0 text-rose-600">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <div className="space-y-0.5 text-left">
+                <p className="font-black text-sm sm:text-base text-rose-950">
+                  {lang === 'te' ? 'ఆకు చిత్రం సరిగ్గా లేదు' : 'Invalid Plant Leaf Image'}
+                </p>
+                <p className="text-xs sm:text-sm font-bold text-rose-800">
+                  {error}
+                </p>
               </div>
             </div>
           )}

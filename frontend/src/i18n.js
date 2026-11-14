@@ -105,7 +105,8 @@ export const translations = {
       speedSlow: "Slow Voice",
       speedNormal: "Normal Voice",
       listenSection: "Listen",
-      errorPrefix: "Error: "
+      errorPrefix: "Error: ",
+      invalidLeafError: "Upload a correct image of the leaf or upload a leaf image."
     },
     dashboard: {
       title: "Farmer Health Dashboard",
@@ -257,7 +258,8 @@ export const translations = {
       speedSlow: "నెమ్మదిగా",
       speedNormal: "సాధారణం",
       listenSection: "వినండి",
-      errorPrefix: "లోపం: "
+      errorPrefix: "లోపం: ",
+      invalidLeafError: "దయచేసి సరైన పంట ఆకు చిత్రాన్ని అప్‌లోడ్ చేయండి."
     },
     dashboard: {
       title: "రైతు ఆరోగ్య సమాచార డ్యాష్‌బోర్డ్",
