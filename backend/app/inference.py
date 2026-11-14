@@ -92,8 +92,8 @@ class PlantDiseasePredictor:
 
     def validate_leaf_image(self, pil_image: Image.Image) -> tuple:
         """
-        Botanical verification: ensure image contains plant foliage/leaf tissue
-        and is not a solid screen, blurry void, face, vehicle, animal, or random object.
+        Botanical verification: ensure image contains genuine plant foliage/leaf tissue
+        and strictly rejects humans (faces, hands, skin), animals, objects, clothing, walls, or screens.
         Memory-safe: operates on 256x256 thumbnail to guarantee < 1MB RAM on any device.
         """
         img = pil_image.convert("RGB")
@@ -102,10 +102,12 @@ class PlantDiseasePredictor:
         arr = np.array(img, dtype=np.float32)
         h, w, _ = arr.shape
 
+        # 1. Texture check: blank or uniform images
         std_val = float(np.std(arr))
         if std_val < 14.0:
             return False, "Image has virtually no texture or visual variation (blank or flat color).", 0.0
 
+        # 2. Exposure check: pitch dark or overexposed
         mean_val = float(np.mean(arr))
         if mean_val < 18.0 or mean_val > 242.0:
             return False, "Image is heavily underexposed (too dark) or overexposed (washed out).", 0.0
@@ -113,27 +115,65 @@ class PlantDiseasePredictor:
         r, g, b = arr[:, :, 0] / 255.0, arr[:, :, 1] / 255.0, arr[:, :, 2] / 255.0
         cmax = np.maximum(np.maximum(r, g), b)
         cmin = np.minimum(np.minimum(r, g), b)
-        diff = cmax - cmin + 1e-6
-        s = diff / (cmax + 1e-6)
+        delta = cmax - cmin + 1e-6
+        s = delta / (cmax + 1e-6)
 
+        # Hue in degrees (0 to 360)
         hue = np.zeros_like(cmax)
-        mask_r = (cmax == r)
-        mask_g = (cmax == g)
-        mask_b = (cmax == b)
-        hue[mask_r] = (60.0 * ((g[mask_r] - b[mask_r]) / diff[mask_r])) % 360
-        hue[mask_g] = (60.0 * ((b[mask_g] - r[mask_g]) / diff[mask_g]) + 120.0) % 360
-        hue[mask_b] = (60.0 * ((r[mask_b] - g[mask_b]) / diff[mask_b]) + 240.0) % 360
+        mask_r = (cmax == r) & (delta > 1e-5)
+        mask_g = (cmax == g) & (delta > 1e-5)
+        mask_b = (cmax == b) & (delta > 1e-5)
+        hue[mask_r] = (60.0 * ((g[mask_r] - b[mask_r]) / delta[mask_r])) % 360
+        hue[mask_g] = (60.0 * ((b[mask_g] - r[mask_g]) / delta[mask_g]) + 120.0) % 360
+        hue[mask_b] = (60.0 * ((r[mask_b] - g[mask_b]) / delta[mask_b]) + 240.0) % 360
 
-        # 1. Botanical Green & Yellow foliage (healthy, chlorotic, or yellowing leaves)
-        green_foliage = (hue >= 26) & (hue <= 118) & (s >= 0.10) & (cmax >= 0.10) & (g >= r * 0.78)
+        # Excess Green index (standard agronomic vegetation index)
+        exg = 2 * g - r - b
 
-        # 2. Diseased Necrotic foliage (lesions, late blight dark decay, rust pustules)
-        necrotic_foliage = (hue >= 8) & (hue < 26) & (s >= 0.15) & (cmax >= 0.10) & (cmax <= 0.85) & (g > b * 1.05)
+        # 3. Detect Genuine Botanical Foliage (Chlorophyll pigmentation):
+        # A. Healthy, olive, or dark green leaf tissue:
+        # - Hue between 35 deg and 160 deg (yellow-green to forest green)
+        # - Green channel distinctly higher than blue (plants strongly absorb blue): g - b >= 0.05
+        # - Green greater than or equal to red: g >= r * 0.95
+        # - Excess Green >= 0.05
+        # - Sufficient saturation (>= 0.16) and brightness (0.12 to 0.95)
+        botanical_green = (
+            (hue >= 35) & (hue <= 160) &
+            (s >= 0.16) & (cmax >= 0.12) & (cmax <= 0.95) &
+            ((g - b) >= 0.05) & (g >= r * 0.95) & (exg >= 0.05)
+        )
 
-        foliage_mask = green_foliage | necrotic_foliage
+        # B. Chlorotic / Yellowing foliage (blight haloes, mosaic, chlorosis):
+        # - Yellow hue (30 deg to 45 deg) with strong saturation (>= 0.28)
+        # - Distinct green over blue: g - b >= 0.09 and g >= r * 0.88
+        yellow_chlorosis = (
+            (hue >= 30) & (hue < 45) &
+            (s >= 0.28) & (cmax >= 0.20) &
+            ((g - b) >= 0.09) & (g >= r * 0.88) & (exg >= 0.0)
+        )
+
+        foliage_mask = botanical_green | yellow_chlorosis
         foliage_ratio = float(np.sum(foliage_mask)) / float(h * w)
 
-        if foliage_ratio < 0.14:
+        # 4. Detect Human Skin (Faces, hands, selfies, portraits across all Fitzpatrick skin tones):
+        # Human skin is dominated by oxygenated/deoxygenated hemoglobin and melanin:
+        # R > G > B, significant red channel, clear R - G separation, skin locus in HSV
+        skin_rgb = (r > 0.36) & (g > 0.16) & (b > 0.08) & (r > g) & (g > b) & ((r - g) > 0.05) & ((r - b) > 0.10)
+        skin_hue = (hue <= 30) | (hue >= 340)
+        skin_sat = (s >= 0.15) & (s <= 0.72)
+        skin_mask = skin_rgb & skin_hue & skin_sat
+        skin_ratio = float(np.sum(skin_mask)) / float(h * w)
+
+        # Rejection rule 1: Human skin/face detected
+        if skin_ratio > 0.12 and foliage_ratio < 0.22:
+            return False, f"Human face, hand, or skin detected ({skin_ratio*100:.1f}% skin tone). Please scan a crop leaf.", foliage_ratio
+
+        if skin_ratio > 0.28:
+            return False, f"Human subject detected ({skin_ratio*100:.1f}% skin tone). Please scan a crop leaf.", foliage_ratio
+
+        # Rejection rule 2: Minimum botanical leaf foliage
+        # Real leaf photos have at least 15% green/chlorophyll foliage
+        if foliage_ratio < 0.15:
             return False, f"Non-botanical photo: only {foliage_ratio*100:.1f}% plant foliage detected.", foliage_ratio
 
         return True, "Valid plant leaf detected.", foliage_ratio
@@ -151,59 +191,63 @@ class PlantDiseasePredictor:
         # Step 1: Validate image content is a botanical plant leaf
         is_leaf, leaf_msg, foliage_ratio = self.validate_leaf_image(pil_image)
         if not is_leaf:
+            is_human = "Human" in leaf_msg or "skin" in leaf_msg.lower()
             return {
-                "crop": "Unrecognized / Non-Plant",
-                "crop_te": "గుర్తించబడని చిత్రం (పంట ఆకు కాదు)",
-                "predicted_disease": "Not a Recognized Plant Leaf",
-                "predicted_disease_te": "పంట ఆకు కాదు / గుర్తించలేని చిత్రం",
+                "crop": "Human / Non-Plant" if is_human else "Unrecognized / Non-Plant",
+                "crop_te": "మనుషులు / పంట ఆకు కాదు" if is_human else "గుర్తించబడని చిత్రం (పంట ఆకు కాదు)",
+                "predicted_disease": "Human Subject Detected (Not a Plant Leaf)" if is_human else "Not a Recognized Plant Leaf",
+                "predicted_disease_te": "మనుషుల చిత్రం గుర్తించబడింది (పంట ఆకు కాదు)" if is_human else "పంట ఆకు కాదు / గుర్తించలేని చిత్రం",
                 "confidence": 0.0,
                 "is_healthy": False,
                 "severity": "Rescan Required",
                 "description": (
                     f"The uploaded photo does not appear to be a crop leaf ({leaf_msg}). "
-                    "Please capture or upload a clear, well-lit photo of an affected crop leaf."
+                    "KrishiSeva AI is an agricultural tool designed strictly for crop leaf disease detection. "
+                    "Please capture or upload a clear photo of an affected crop leaf."
                 ),
                 "description_te": (
-                    "అప్‌లోడ్ చేసిన చిత్రం పంట ఆకుగా గుర్తించబడలేదు. "
+                    "అప్‌లోడ్ చేసిన చిత్రంలో మనుషులు లేదా శరీర భాగాలు గుర్తించబడ్డాయి. " if is_human else "అప్‌లోడ్ చేసిన చిత్రం పంట ఆకుగా గుర్తించబడలేదు. "
+                ) + (
+                    "కృషిసేవ AI కేవలం పంట ఆకుల తెగుళ్లను గుర్తించడానికి మాత్రమే రూపొందించబడింది. "
                     "దయచేసి మంచి వెలుతురులో పంట ఆకు మాత్రమే కనిపించేలా స్పష్టంగా ఫోటో తీసి అప్‌లోడ్ చేయండి."
                 ),
                 "symptoms": [
                     "No identifiable plant foliage or botanical leaf structure detected",
-                    "Image may be a non-plant object, person, animal, screen, or heavily blurred"
+                    "Image appears to be a person, face, animal, clothing, screen, or non-plant object"
                 ],
                 "symptoms_te": [
                     "చిత్రంలో ఎటువంటి పంట ఆకు లేదా వృక్ష సంబంధిత భాగాలు కనిపించలేదు",
-                    "ఇది పంట ఆకు కాకుండా ఇతర వస్తువు, మనుషులు లేదా అస్పష్టమైన చిత్రం కావచ్చు"
+                    "ఇది మనుషులు, ఇతర వస్తువులు లేదా అస్పష్టమైన చిత్రంగా గుర్తించబడింది"
                 ],
                 "treatment_organic": [
-                    "Please hold the camera 15-20cm away from the leaf in natural daylight",
-                    "Ensure the plant leaf covers at least 60% of the frame"
+                    "Please hold the camera 15-20cm away from the crop leaf in natural daylight",
+                    "Ensure the plant leaf covers at least 60% of the camera frame"
                 ],
                 "treatment_organic_te": [
                     "సహజ పగటి వెలుతురులో ఆకుకు 15-20 సెం.మీ దూరంలో కెమెరా ఉంచి ఫోటో తీయండి.",
                     "ఫోటోలో ఆకు స్పష్టంగా కనిపించేలా చూసుకోండి."
                 ],
                 "treatment_chemical": [
-                    "Do not spray or apply chemicals on unverified images."
+                    "Treatment protocols strictly withheld: Do not apply chemical pesticides to unverified images."
                 ],
                 "treatment_chemical_te": [
-                    "గుర్తించబడని చిత్రాల ఆధారంగా ఎటువంటి రసాయన మందులు పిచికారీ చేయవద్దు."
+                    "మందుల వివరాలు నిలిపివేయబడ్డాయి: గుర్తించబడని చిత్రాల ఆధారంగా ఎటువంటి రసాయన మందులు పిచికారీ చేయవద్దు."
                 ],
                 "prevention": [
-                    "Center the leaf in good lighting and avoid capturing hands, faces, or background clutter"
+                    "Center the affected crop leaf in good lighting and avoid capturing faces, hands, or background clutter"
                 ],
                 "prevention_te": [
-                    "చేతులు, ఇతర వస్తువులు లేకుండా కేవలం పంట ఆకు మాత్రమే కనిపించేలా ఫోటో తీయండి."
+                    "ముఖాలు, చేతులు, ఇతర వస్తువులు లేకుండా కేవలం పంట ఆకు మాత్రమే కనిపించేలా ఫోటో తీయండి."
                 ],
                 "helpline": "Kisan Call Center: 1800-180-1551",
-                "disclaimer": "AI detection requires a clear leaf photograph.",
-                "disclaimer_te": "ఖచ్చితమైన నిర్ధారణ కోసం స్పష్టమైన ఆకు చిత్రం అవసరం.",
+                "disclaimer": "AI detection requires a clear botanical leaf photograph.",
+                "disclaimer_te": "ఖచ్చితమైన నిర్ధారణ కోసం స్పష్టమైన పంట ఆకు చిత్రం అవసరం.",
                 "top_candidates": [],
                 "is_valid_leaf": False,
                 "is_supported_crop": False,
                 "status": "non_plant",
                 "uncertainty_message": leaf_msg,
-                "uncertainty_message_te": "చిత్రంలో పంట ఆకు భాగం తగినంత స్పష్టంగా కనిపించడం లేదు."
+                "uncertainty_message_te": "మనుషులు లేదా వృక్ష సంబంధం లేని చిత్రం గుర్తించబడింది." if is_human else "చిత్రంలో పంట ఆకు భాగం తగినంత స్పష్టంగా కనిపించడం లేదు."
             }
 
         # Step 2: Check for specific crop hints (e.g. Brinjal / Eggplant / Vankaya)
